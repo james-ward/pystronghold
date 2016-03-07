@@ -1,7 +1,7 @@
 
 import math
 
-from wpilib import CANTalon, PIDController
+from wpilib import CANTalon, PIDController, Encoder, DigitalInput, Victor
 from wpilib.interfaces import PIDOutput, PIDSource
 
 from .bno055 import BNO055
@@ -52,6 +52,7 @@ class Chassis:
     range_finder = RangeFinder
     heading_hold_pid_output = BlankPIDOutput
     heading_hold_pid = PIDController
+    encoder_counts_per_metre = 1.0
 
     def __init__(self):
         super().__init__()
@@ -62,6 +63,7 @@ class Chassis:
         self._modules = {}
         for name, params in Chassis.module_params.items():
             self._modules[name] = SwerveModule(**(params['args']))
+        self.victor_motors = [Victor(x) for x in range(4)]
         self.field_oriented = True
         self.inputs = [0.0, 0.0, 0.0, 0.0]
         self.vx = self.vy = self.vz = 0.0
@@ -83,6 +85,16 @@ class Chassis:
         self.distance_pid.setInputRange(-1.0, 1.0)  # TODO check that this range is good for us
         self.distance_pid.setOutputRange(-0.4, 0.4)
         self.distance_pid.setSetpoint(0.0)
+        self.encoder_a = Encoder(
+                aSource=DigitalInput(1),
+                bSource=DigitalInput(2),
+                reverseDirection=True
+                )
+        self.encoder_b = Encoder(
+                aSource=DigitalInput(3),
+                bSource=DigitalInput(4),
+                reverseDirection=False
+                )
 
     def on_enable(self):
         self.bno055.resetHeading()
@@ -117,8 +129,10 @@ class Chassis:
             self.range_setpoint = 0.0
 
     def zero_encoders(self):
-        for module in self._modules.values():
-            module.zero_distance()
+        """for module in self._modules.values():
+            module.zero_distance()"""
+        self.encoder_a.reset()
+        self.encoder_b.reset()
 
     def field_displace(self, x, y):
         '''Use the distance PID to displace the robot by x,y in field reference frame.'''
@@ -138,12 +152,38 @@ class Chassis:
 
     @property
     def distance(self):
-        distances = 0.0
+        """distances = 0.0
         for module in self._modules.values():
             distances += abs(module.distance) / module.drive_counts_per_metre
-        return distances / len(self._modules)
+        return distances / len(self._modules)"""
+        distances = [self.encoder_a.get(), self.encoder_b.get()]
+        for distance in distances:
+            distance = distance / Chassis.encoder_counts_per_metre
+        return sum(distances)/len(distances)
 
     def drive(self, vX, vY, vZ, absolute=False):
+
+        #these mappings assuming that +ve wheel rotation is ccw
+        #for a standard tank drive
+        mA = vX - vZ
+        mB = vX - vZ
+        mC = -vX - vZ
+        mD = -vX - vZ
+        motor_values = [mA, mB, mC, mD]
+
+        # scale between 0 and 1
+        max_val = 1.0
+        for value in motor_values:
+            if abs(value) > max_val:
+                max_val = abs(value)
+
+        for motor, value in zip(self.victor_motors, motor_values):
+            value /= max_val
+            #print("vX: ", vX, " Value: ", value)
+            motor.set(value)
+            #print("Set point: ", motor.setPoint)
+
+    """def drive(self, vX, vY, vZ, absolute=False):
         motor_vectors = {}
         for name, params in Chassis.module_params.items():
             motor_vectors[name] = {'x': vX + vZ * params['vz']['x'],
@@ -170,7 +210,7 @@ class Chassis:
                 continue
 
         for name, polar_vector in polar_vectors.items():
-            self._modules[name].steer(polar_vector['dir'], polar_vector['mag'])
+            self._modules[name].steer(polar_vector['dir'], polar_vector['mag'])"""
 
     def execute(self):
         if self.field_oriented and self.inputs[3] is not None:
