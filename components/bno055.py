@@ -28,7 +28,7 @@ class BNO055(GyroBase):
         self.i2c = I2C(port, self.address, sim_port)
 
         # set the units that we want
-        current_units = self.i2c.read(self.BNO055_UNIT_SEL_ADDR, 1)[0]
+        """current_units = self.i2c.read(self.BNO055_UNIT_SEL_ADDR, 1)[0]
         for unit_list in self.BNO055_UNIT_SEL_LIST:
             if unit_list[0] == 1:
                 current_units = current_units | (1 << unit_list[1])
@@ -37,11 +37,11 @@ class BNO055(GyroBase):
         self.i2c.write(self.BNO055_UNIT_SEL_ADDR, current_units)
         self.setOperationMode(self.OPERATION_MODE_IMUPLUS)  # accelerometer and gyro
         self.offset = 0.0
-        self.reverse_axis(False, False, False)
+        self.reverse_axis(False, False, False)"""
 
     def reverse_axis(self, x, y, z):
         """Reverse the axis directions, xyz are booleans"""
-        current_directions = self.i2c.read(self.BNO055_AXIS_MAP_SIGN_ADDR, 1)[0]
+        """current_directions = self.i2c.read(self.BNO055_AXIS_MAP_SIGN_ADDR, 1)[0]
         if x:
             current_directions = current_directions | (1 << 2)
         else:
@@ -54,47 +54,56 @@ class BNO055(GyroBase):
             current_directions = current_directions | (1 << 0)
         else:
             current_directions = current_directions & ~ (1 << 0)
-        self.i2c.write(self.BNO055_AXIS_MAP_SIGN_ADDR, current_directions)
+        self.i2c.write(self.BNO055_AXIS_MAP_SIGN_ADDR, current_directions)"""
 
     def setOperationMode(self, mode):
-        if 0X00 <= mode <= 0X0C:  # ensure the operation mode is in the valid range
-            self.i2c.write(self.BNO055_OPR_MODE_ADDR, mode)
+        """if 0X00 <= mode <= 0X0C:  # ensure the operation mode is in the valid range
+            self.i2c.write(self.BNO055_OPR_MODE_ADDR, mode)"""
 
     def getAngle(self):
         """Function called by the GyroBase's PID Source to get the
         current measurement"""
-        return self.getHeading()
+        return 0.0
+        #return self.getHeading()
 
     def getAngles(self):
         """ Return the [heading, pitch, roll] of the gyro """
-        return [self.getHeading(), self.getPitch(), self.getRoll()]
+        return [0.0, 0.0, 0.0]
+        #return [self.getHeading(), self.getPitch(), self.getRoll()]
 
     def getHeading(self):
-        angle = (self.getRawHeading() - self.offset)
-        return math.atan2(math.sin(angle), math.cos(angle))
+        return 0.0
+        #angle = (self.getRawHeading() - self.offset)
+        #return math.atan2(math.sin(angle), math.cos(angle))
 
     def getRawHeading(self):
-        return -self.getEuler(self.BNO055_EULER_H_LSB_ADDR)
+        #return -self.getEuler(self.BNO055_EULER_H_LSB_ADDR)
+        return 0.0
 
     def getPitch(self):
-        return self.getEuler(self.BNO055_EULER_P_LSB_ADDR)
+        #return self.getEuler(self.BNO055_EULER_P_LSB_ADDR)
+        return 0.0
 
     def getRoll(self):
-        return self.getEuler(self.BNO055_EULER_R_LSB_ADDR)
+        #return self.getEuler(self.BNO055_EULER_R_LSB_ADDR)
+        return 0.0
 
     def getEuler(self, start_register):
-        euler_bytes = self.i2c.read(start_register, 2)
+        """euler_bytes = self.i2c.read(start_register, 2)
         euler_unsigned = euler_bytes[1] << 8 | euler_bytes[0]
         if euler_unsigned > 32767:
             euler_unsigned -= 65536
         euler_signed = float(euler_unsigned) / 900.0
-        return euler_signed
+        return euler_signed"""
+        return 0.0
 
     def getHeadingRate(self):
-        return -self.getEuler(BNO055.BNO055_GYRO_DATA_Z_LSB_ADDR)
+        #return -self.getEuler(BNO055.BNO055_GYRO_DATA_Z_LSB_ADDR)
+        return 0.0
 
     def resetHeading(self, heading=math.pi):
-        self.offset = self.getRawHeading() - heading
+        return
+        #self.offset = self.getRawHeading() - heading
 
     def execute(self):
         pass  # Keep MagicBot happy!

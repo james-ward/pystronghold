@@ -22,6 +22,8 @@ class StrongholdRobot(magicbot.MagicRobot):
     intake = Intake
     shooter = Shooter
     defeater = Defeater
+    encoder_a = wpilib.Encoder
+    encoder_b = wpilib.Encoder
 
     def createObjects(self):
         self.logger = logging.getLogger("robot")
@@ -38,6 +40,8 @@ class StrongholdRobot(magicbot.MagicRobot):
         self.vision = Vision()
         self.range_finder = RangeFinder(0)
         self.heading_hold_pid_output = BlankPIDOutput()
+        self.encoder_a = wpilib.Encoder(aSource=wpilib.DigitalInput(1), bSource=wpilib.DigitalInput(2))
+        self.encoder_b = wpilib.Encoder(aSource=wpilib.DigitalInput(3), bSource=wpilib.DigitalInput(4))
         Tu = 1.6
         Ku = 0.6
         Kp = Ku * 0.2
@@ -84,6 +88,8 @@ class StrongholdRobot(magicbot.MagicRobot):
         self.sd.putDouble("defeater_speed", self.defeater_motor.get())
         self.sd.putDouble("joystick_throttle", self.joystick.getThrottle())
         self.sd.putDouble("range_pid_get", self.range_finder.pidGet())
+        self.sd.putDouble("encoder_a", self.encoder_a.get())
+        self.sd.putDouble("encoder_b", self.encoder_b.get())
 
 
     def disabledInit(self):
