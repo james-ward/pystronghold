@@ -18,7 +18,7 @@ class Vision:
     video_contrast = 0.5
     video_brightness = 0.5
     video_saturation = 0.5
-    video_exposure = 5  # min 3 max 2047
+    video_exposure = 4000  # higher is shorter exposure
     video_white_balance = 4000  # min 2000 max 6500
     video_gain = 0.0
     def __init__(self):
@@ -88,14 +88,16 @@ class VisionProcess(multiprocessing.Process):
         # Convert from BGR colourspace to HSV. Makes thresholding easier.
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         # #Define the colours to look for (in HSV)
-        lower_colour = np.array([40, 200, 20])
-        upper_colour = np.array([110, 255, 150])
+        # OpenCV expects a range of H=[0,180], S=[0,255], V=[0,255]
+        lower_colour = np.array([80/2, 25*255/100, 5*255/100])
+        upper_colour = np.array([140/2, 100*255/100, 60*255/100])
         # Create a mask that filters out only those colours
         mask = cv2.inRange(hsv_image, lower_colour, upper_colour)
         # Errode and dialate the image to get rid of noise
-        kernel = np.ones((4, 4), np.uint8)
-        erosion = cv2.erode(mask, kernel, iterations=1)
-        dilated = cv2.dilate(erosion, kernel, iterations=1)
+        #kernel = np.ones((4, 4), np.uint8)
+        #erosion = cv2.erode(mask, kernel, iterations=1)
+        #dilated = cv2.dilate(erosion, kernel, iterations=1)
+        dilated = mask  # Skip erode and dilate
         # Get the information for the contours
         _, contours, __ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         # sort the contours into a list
